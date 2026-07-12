@@ -273,10 +273,12 @@ class Renderer:
     def _draw_single_bug(self, frame: np.ndarray, bug: Bug) -> None:
         """
         Dibuja un bug como ícono de insecto estilizado con OpenCV.
+        Todos los valores se castean explícitamente a int para
+        compatibilidad con OpenCV 4.10+.
         Ilación 5 reemplazará esta función por overlay de PNG.
         """
-        cx, cy = bug.x, bug.y
-        r      = bug.radius
+        cx, cy = int(bug.x), int(bug.y)
+        r      = int(bug.radius)
 
         # Cuerpo principal (elipse verde)
         cv2.ellipse(frame, (cx, cy), (r - 6, r), 0, 0, 360,
@@ -286,17 +288,18 @@ class Renderer:
 
         # Cabeza
         head_r = r // 2
-        cv2.circle(frame, (cx, cy - r + head_r // 2), head_r,
+        head_cy = cy - r + head_r // 2
+        cv2.circle(frame, (cx, head_cy), head_r,
                    COLOR_BUG_BODY, -1)
-        cv2.circle(frame, (cx, cy - r + head_r // 2), head_r,
+        cv2.circle(frame, (cx, head_cy), head_r,
                    COLOR_BUG_BORDER, 2)
 
         # Ojos
         eye_off = head_r // 2
         for ex in [cx - eye_off, cx + eye_off]:
-            ey = cy - r + head_r // 2
-            cv2.circle(frame, (ex, ey), 5, COLOR_BUG_EYE,   -1)
-            cv2.circle(frame, (ex, ey), 2, COLOR_BUG_PUPIL,  -1)
+            ey = int(head_cy)
+            cv2.circle(frame, (int(ex), ey), 5, COLOR_BUG_EYE,   -1)
+            cv2.circle(frame, (int(ex), ey), 2, COLOR_BUG_PUPIL,  -1)
 
         # Antenas
         ant_base = (cx, cy - r - head_r // 4)
@@ -306,7 +309,7 @@ class Renderer:
                  COLOR_BUG_BORDER, 2)
 
         # Patas (3 a cada lado)
-        for i, frac in enumerate([0.2, 0.5, 0.8]):
+        for frac in [0.2, 0.5, 0.8]:
             py = int(cy - r + frac * 2 * r)
             cv2.line(frame, (cx - r + 6, py),
                      (cx - r - 14, py + random.randint(-4, 4)),

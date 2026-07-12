@@ -329,19 +329,19 @@ class Renderer:
     ) -> None:
         now = time.time()
         for eff in effects:
-            age    = now - eff.birth_time
-            alpha  = max(0.0, 1.0 - age / eff.duration)
-            # El texto sube mientras desvanece
-            y_off  = int(age * 60)
-            pos    = (eff.x - 20, eff.y - 20 - y_off)
+            age   = now - eff.birth_time
+            alpha = max(0.0, 1.0 - age / eff.duration)
+            px    = int(eff.x) - 20
+            py    = int(eff.y) - 20 - int(age * 60)
             # Sombra
-            cv2.putText(frame, eff.text,
-                        (pos[0] + 2, pos[1] + 2),
+            cv2.putText(frame, eff.text, (px + 2, py + 2),
                         cv2.FONT_HERSHEY_DUPLEX, 0.85,
                         (0, 0, 0), 3, cv2.LINE_AA)
-            # Texto principal (se oscurece al desvanecerse con alpha)
-            color = tuple(int(c * alpha) for c in eff.color)
-            cv2.putText(frame, eff.text, pos,
+            # Texto con alpha aplicado canal a canal
+            color = (int(eff.color[0] * alpha),
+                     int(eff.color[1] * alpha),
+                     int(eff.color[2] * alpha))
+            cv2.putText(frame, eff.text, (px, py),
                         cv2.FONT_HERSHEY_DUPLEX, 0.85,
                         color, 2, cv2.LINE_AA)
 
@@ -359,12 +359,12 @@ class Renderer:
                     (12, 36), cv2.FONT_HERSHEY_DUPLEX,
                     0.9, COLOR_SCORE, 2, cv2.LINE_AA)
 
-        # Vidas como corazones (texto)
-        hearts = "♥ " * state.lives + "♡ " * (INITIAL_LIVES - state.lives)
-        cv2.putText(frame, hearts.strip(),
-                    (FRAME_W // 2 - 55, 36),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.85, COLOR_LIVES, 2, cv2.LINE_AA)
+        # Vidas: círculos (evita caracteres Unicode no soportados por OpenCV)
+        for i in range(INITIAL_LIVES):
+            cx_h  = int(FRAME_W // 2 - 40 + i * 30)
+            color_h = COLOR_LIVES if i < state.lives else (60, 60, 60)
+            cv2.circle(frame, (cx_h, 26), 10, color_h, -1)
+            cv2.circle(frame, (cx_h, 26), 10, (200, 200, 200), 1)
 
         # Combo activo
         if state.combo >= 3:
